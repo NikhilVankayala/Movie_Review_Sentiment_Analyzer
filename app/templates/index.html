@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Review Sentiment Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-xl">
+        <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">Movie Review Sentiment Analyzer</h1>
+        <p class="text-gray-600 text-center mb-6">
+            Enter a movie review below to find out if the sentiment is positive or negative.
+        </p>
+        
+        <form id="sentimentForm" class="space-y-4">
+            <textarea 
+                id="review_text" 
+                name="review_text" 
+                class="w-full h-32 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                placeholder="Type your movie review here..."
+                required
+            ></textarea>
+            
+            <button 
+                type="submit" 
+                class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            >
+                Analyze Sentiment
+            </button>
+        </form>
+
+        <div id="result" class="mt-6 p-4 rounded-lg text-center" style="display: none;">
+            <p class="text-lg font-semibold text-gray-700">Prediction:</p>
+            <p id="predictionText" class="text-2xl font-bold mt-2"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('sentimentForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const reviewText = document.getElementById('review_text').value;
+            const resultDiv = document.getElementById('result');
+            const predictionText = document.getElementById('predictionText');
+            
+            // Show a loading state
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'mt-6 p-4 rounded-lg text-center bg-gray-200 text-gray-800';
+            predictionText.innerText = 'Analyzing...';
+            
+            fetch('/predict', {
+                method: 'POST',
+                body: new URLSearchParams(new FormData(event.target))
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    predictionText.innerText = `Error: ${data.error}`;
+                    resultDiv.className = 'mt-6 p-4 rounded-lg text-center bg-red-100 text-red-800';
+                } else {
+                    const prediction = data.prediction;
+                    predictionText.innerText = prediction.charAt(0).toUpperCase() + prediction.slice(1);
+                    
+                    if (prediction === 'positive') {
+                        resultDiv.className = 'mt-6 p-4 rounded-lg text-center bg-green-100 text-green-800';
+                    } else {
+                        resultDiv.className = 'mt-6 p-4 rounded-lg text-center bg-red-100 text-red-800';
+                    }
+                }
+            })
+            .catch(error => {
+                predictionText.innerText = 'An unexpected error occurred.';
+                resultDiv.className = 'mt-6 p-4 rounded-lg text-center bg-red-100 text-red-800';
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
